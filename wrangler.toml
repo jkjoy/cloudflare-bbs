@@ -12,11 +12,11 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "micro-bbs"
-database_id = "replace-with-your-d1-database-id"
+database_id = "d886e6dc-e493-495b-b2c5-fb193bc6ee08"
 
 [[kv_namespaces]]
 binding = "FORUM_KV"
-id = "replace-with-your-kv-namespace-id"
+id = "8e92872f71c24b2884aa0a8edb7c5749"
 
 [vars]
 SESSION_TTL_DAYS = "14"

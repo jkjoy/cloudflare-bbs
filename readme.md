@@ -2,8 +2,6 @@
 
 基于 Cloudflare Workers + D1 + KV 的微型论坛。
 
-前台版式参考了 `E:\OneDrive\桌面\Hax2pK` 的轻论坛结构，保留左侧板块导航、右侧用户/信息栏、中间内容流的布局；后端改造成 Cloudflare Worker API，补齐了完整论坛能力和后台管理。
-
 ## 已实现
 
 - 初始化向导：首次进入可创建管理员账号并填写论坛标题、简介
@@ -63,6 +61,53 @@ npm run dev
 npm run deploy
 ```
 
+## 本地 D1 备份并导入远程
+
+如果你要把本地开发环境的 D1 数据带到远程环境，直接用下面这套命令。
+
+1. 只备份本地开发库到 SQL
+
+```bash
+npm run d1:backup:local
+```
+
+默认会导出到 `backups/d1/local-时间戳.sql`。
+
+2. 只把当前本地 D1 数据导入远程 D1
+
+```bash
+npm run d1:import:remote
+```
+
+这个命令会自动执行以下动作：
+
+- 从当前本地 D1 按业务表导出数据，生成 `local-时间戳.data.sql`
+- 生成一个远程可直接执行的 `local-时间戳.remote-import.sql`
+- 先备份当前远程 D1 到 `remote-before-import-时间戳.sql`
+- 自动执行远程 D1 migrations
+- 清空远程业务表后再导入本地数据
+- 自动 bump KV 缓存版本，避免远程页面继续读旧缓存
+
+3. 远程部署时同时同步本地数据
+
+```bash
+npm run d1:deploy:with-data
+```
+
+这个命令会先备份本地 D1，再同步远程 D1 数据，最后执行 `wrangler deploy`。
+
+### 说明
+
+- 为了避免误把空本地库覆盖到远程，脚本默认会在检测到“本地导出没有任何业务数据”时直接中止。
+- 如果你明确就是想清空远程业务数据，可以追加 `-- --allow-empty`。
+- 如果你已经有现成 SQL，也可以直接导入：
+
+```bash
+npm run d1:import:remote -- --input backups/d1/your-file.sql
+```
+
+- 这些脚本只处理 D1 数据；会话、限流、备份快照等 KV 数据不会一起迁移。
+
 ## 导入 Discuz `dz.sql`
 
 当前仓库已经补了一个本地转换脚本，可以把 Discuz 的 `dz.sql` 转成当前 D1 结构可直接执行的 SQL。
@@ -109,6 +154,7 @@ npx wrangler d1 execute micro-bbs --local --file=discuz-import.sql
 
 - `npm run typecheck`
 - `node --check scripts/import-discuz.mjs`
+- `node --check scripts/d1-sync.mjs`
 - `node --check public/scripts/shared.js`
 - `node --check public/scripts/app.js`
 - `node --check public/scripts/admin.js`

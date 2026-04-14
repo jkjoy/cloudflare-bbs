@@ -8,9 +8,13 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "cf-typegen": "wrangler types",
-    "import:discuz": "node scripts/import-discuz.mjs"
+    "import:discuz": "node scripts/import-discuz.mjs",
+    "d1:backup:local": "node scripts/d1-sync.mjs backup-local",
+    "d1:import:remote": "node scripts/d1-sync.mjs import-remote",
+    "d1:deploy:with-data": "node scripts/d1-sync.mjs deploy-with-data"
   },
   "dependencies": {
+    "@noble/hashes": "^2.2.0",
     "@types/blueimp-md5": "^2.18.2",
     "blueimp-md5": "^2.19.0",
     "hono": "^4.9.6",

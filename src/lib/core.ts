@@ -1,4 +1,6 @@
 import md5 from 'blueimp-md5';
+import { pbkdf2 } from '@noble/hashes/pbkdf2.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import type { Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import type { z } from 'zod';
@@ -24,8 +26,9 @@ export class ApiError extends Error {
   }
 }
 
-const enc = new TextEncoder();
 const DISCUZ_HASH_PREFIX = 'discuzmd5';
+const PASSWORD_ITERATIONS = 210_000;
+const PASSWORD_KEY_LENGTH = 32;
 type SettingsRecord = Record<string, string>;
 const EMPTY_ADMIN_CAPABILITIES: AdminCapabilities = {
   accessAdmin: false,
@@ -278,18 +281,7 @@ export async function applyRateLimit(
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.randomUUID().replaceAll('-', '');
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      hash: 'SHA-256',
-      salt: enc.encode(salt),
-      iterations: 210_000,
-    },
-    key,
-    256,
-  );
-  return `${salt}:${base64Url(new Uint8Array(bits))}`;
+  return `${salt}:${derivePasswordDigest(password, salt)}`;
 }
 
 export function isLegacyPasswordHash(stored: string): boolean {
@@ -306,18 +298,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   if (!salt || !expected || extra !== undefined) {
     return false;
   }
-  const key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      hash: 'SHA-256',
-      salt: enc.encode(salt),
-      iterations: 210_000,
-    },
-    key,
-    256,
-  );
-  return constantTimeEqual(base64Url(new Uint8Array(bits)), expected);
+  return constantTimeEqual(derivePasswordDigest(password, salt), expected);
 }
 
 export async function loadSettingsMap(env: Bindings, force = false): Promise<Map<string, string>> {
@@ -523,12 +504,35 @@ async function loadSettingsRecord(env: Bindings, force = false): Promise<Setting
   return Object.fromEntries(results.map((row) => [row.key, row.value]));
 }
 
-function base64Url(bytes: Uint8Array): string {
-  let raw = '';
-  for (const byte of bytes) {
-    raw += String.fromCharCode(byte);
+function derivePasswordDigest(password: string, salt: string): string {
+  const derived = pbkdf2(sha256, password, salt, {
+    c: PASSWORD_ITERATIONS,
+    dkLen: PASSWORD_KEY_LENGTH,
+  });
+  return bytesToBase64Url(derived);
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let encoded = '';
+
+  for (let index = 0; index < bytes.length; index += 3) {
+    const first = bytes[index] ?? 0;
+    const second = bytes[index + 1] ?? 0;
+    const third = bytes[index + 2] ?? 0;
+    const triplet = (first << 16) | (second << 8) | third;
+
+    encoded += alphabet[(triplet >> 18) & 63];
+    encoded += alphabet[(triplet >> 12) & 63];
+    if (index + 1 < bytes.length) {
+      encoded += alphabet[(triplet >> 6) & 63];
+    }
+    if (index + 2 < bytes.length) {
+      encoded += alphabet[triplet & 63];
+    }
   }
-  return btoa(raw).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+
+  return encoded;
 }
 
 function verifyDiscuzPassword(password: string, salt: string, expected: string): boolean {

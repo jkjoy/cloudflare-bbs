@@ -5,3 +5,5 @@ dist/
 *.log
 dz.sql
 discuz-import.sql
+.claude
+backups/
