@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>CFBBS</title>
+  <meta name="description" content="一个运行在 Cloudflare Workers 上的微型论坛。">
+  <meta name="keywords" content="cloudflare, worker, d1, bbs">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/animation.css">
+</head>
+<body>
+  <div id="h" class="l"></div>
+  <div class="side">
+    <div id="u"></div>
+    <div id="link"></div>
+  </div>
+  <main id="m"></main>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <script type="module" src="/scripts/app.js"></script>
+</body>
+</html>

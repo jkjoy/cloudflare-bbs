@@ -1,0 +1,22 @@
+name = "micro-bbs"
+main = "src/index.ts"
+compatibility_date = "2026-03-30"
+
+[observability.logs]
+enabled = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "micro-bbs"
+database_id = "replace-with-your-d1-database-id"
+
+[[kv_namespaces]]
+binding = "FORUM_KV"
+id = "replace-with-your-kv-namespace-id"
+
+[vars]
+SESSION_TTL_DAYS = "14"

@@ -1,0 +1,24 @@
+{
+  "name": "cloudflare-bbs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types",
+    "import:discuz": "node scripts/import-discuz.mjs"
+  },
+  "dependencies": {
+    "@types/blueimp-md5": "^2.18.2",
+    "blueimp-md5": "^2.19.0",
+    "hono": "^4.9.6",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260329.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.53.0"
+  }
+}
